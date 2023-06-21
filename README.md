@@ -1,4 +1,33 @@
-# Dolly
+# Dolly for M Science
+
+This repository extends Databricks' [Dolly](https://huggingface.co/databricks/dolly-v2-12b) to train on Sundial Beacon data.  The Dolly [repository](https://github.com/databrickslabs/dolly) documentation is good---and included below---but lacks a few important tips and tricks.
+
+### Cluster Setup
+
+Train on a GPU cluster running Databricks runtime 13.0 or higher with GPU support, not 12.2 as suggested below.  Feel free to use `nkatuna_gpu_cluster`, or copy its cluster configurations to create your own *single node* GPU cluster.  The `p4d.24xlarge` instances (A100) are very challenging to provision so use the `g5.4xlarge` (A10) instead.  You only need one worker.  Don't increase your cluster size thinking that you'll save time.
+
+We've found that Databricks clusters will occasionally crash without warning during training.  If this happens just restart your cluster and replay your notebook.
+
+### Training Data
+
+In order to limit training time we've used only a subset of Beacon data to train the model.  There are three approaches that we've seen to using LLMs for data science:
+ * Translate the data directly into text for the LLM to process
+ * Feed text insights and contextualizing information (e.g., investment research) into the LLM 
+ * Give the LLM the schema of database tables containing data and insights and ask only for SQL to pull data and insights directly from those database tables
+
+ Here, we attempt only the first approach, and have rewritten the data loading modules in Dolly to pull in M Science data.
+
+
+### Model Selection
+
+The Dolly [code](https://github.com/databrickslabs/dolly) allows you to specify a foundational model.  We've found that more recent changes to the code better support `EleutherAI/pythia-6.9b` rather than `databricks/dolly-v2-12b`.
+
+### Feedback
+
+Please give us your feedback as you play with the model!
+
+
+## Dolly
 
 Databricks’ [Dolly](https://huggingface.co/databricks/dolly-v2-12b) is an instruction-following large language model trained on the Databricks machine learning platform
 that is licensed for commercial use. Based on `pythia-12b`, Dolly is trained on ~15k instruction/response fine tuning records

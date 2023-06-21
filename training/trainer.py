@@ -16,6 +16,7 @@ import logging
 from functools import partial
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
+import json
 
 import click
 import numpy as np
@@ -39,6 +40,7 @@ from .consts import (
     INSTRUCTION_KEY,
     RESPONSE_KEY_NL,
     DEFAULT_TRAINING_DATASET,
+    DEFAULT_MSCIENCE_DATASET,
 )
 
 logger = logging.getLogger(__name__)
@@ -85,9 +87,21 @@ def preprocess_batch(batch: Dict[str, List], tokenizer: AutoTokenizer, max_lengt
     )
 
 
-def load_training_dataset(path_or_dataset: str = DEFAULT_TRAINING_DATASET) -> Dataset:
+def load_training_dataset(path_or_dataset: str = DEFAULT_TRAINING_DATASET, mscience_dataset: str = DEFAULT_MSCIENCE_DATASET) -> Dataset:
     logger.info(f"Loading dataset from {path_or_dataset}")
-    dataset = load_dataset(path_or_dataset)["train"]
+    hf_dataset = load_dataset(path_or_dataset)["train"].to_list()
+
+    with open(mscience_dataset, "r") as f:
+        json_dataset = json.load(f)
+    msci_dataset = [json.loads(d) for d in json_dataset]
+    
+    total_dataset = hf_dataset + msci_dataset
+    def gen():
+        for d in total_dataset:
+            yield d
+
+    dataset = Dataset.from_generator(gen)
+
     logger.info("Found %d rows", dataset.num_rows)
 
     def _add_text(rec):

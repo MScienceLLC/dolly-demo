@@ -34,14 +34,14 @@
 
 # COMMAND ----------
 
-# MAGIC !wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libcusparse-dev-11-7_11.7.3.50-1_amd64.deb -O /tmp/libcusparse-dev-11-7_11.7.3.50-1_amd64.deb && \
-# MAGIC   wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libcublas-dev-11-7_11.10.1.25-1_amd64.deb -O /tmp/libcublas-dev-11-7_11.10.1.25-1_amd64.deb && \
-# MAGIC   wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libcusolver-dev-11-7_11.4.0.1-1_amd64.deb -O /tmp/libcusolver-dev-11-7_11.4.0.1-1_amd64.deb && \
-# MAGIC   wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libcurand-dev-11-7_10.2.10.91-1_amd64.deb -O /tmp/libcurand-dev-11-7_10.2.10.91-1_amd64.deb && \
-# MAGIC   dpkg -i /tmp/libcusparse-dev-11-7_11.7.3.50-1_amd64.deb && \
-# MAGIC   dpkg -i /tmp/libcublas-dev-11-7_11.10.1.25-1_amd64.deb && \
-# MAGIC   dpkg -i /tmp/libcusolver-dev-11-7_11.4.0.1-1_amd64.deb && \
-# MAGIC   dpkg -i /tmp/libcurand-dev-11-7_10.2.10.91-1_amd64.deb
+!wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libcusparse-dev-11-7_11.7.3.50-1_amd64.deb -O /tmp/libcusparse-dev-11-7_11.7.3.50-1_amd64.deb && \
+  wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libcublas-dev-11-7_11.10.1.25-1_amd64.deb -O /tmp/libcublas-dev-11-7_11.10.1.25-1_amd64.deb && \
+  wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libcusolver-dev-11-7_11.4.0.1-1_amd64.deb -O /tmp/libcusolver-dev-11-7_11.4.0.1-1_amd64.deb && \
+  wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libcurand-dev-11-7_10.2.10.91-1_amd64.deb -O /tmp/libcurand-dev-11-7_10.2.10.91-1_amd64.deb && \
+  dpkg -i /tmp/libcusparse-dev-11-7_11.7.3.50-1_amd64.deb && \
+  dpkg -i /tmp/libcublas-dev-11-7_11.10.1.25-1_amd64.deb && \
+  dpkg -i /tmp/libcusolver-dev-11-7_11.4.0.1-1_amd64.deb && \
+  dpkg -i /tmp/libcurand-dev-11-7_10.2.10.91-1_amd64.deb
 
 # COMMAND ----------
 
@@ -67,20 +67,20 @@ logging.getLogger("sh.command").setLevel(logging.ERROR)
 import os
 import re
 from datetime import datetime
-from training.consts import DEFAULT_INPUT_MODEL, SUGGESTED_INPUT_MODELS
+from training.consts import DEFAULT_INPUT_MODEL, SUGGESTED_INPUT_MODELS, DEFAULT_SEED, DEFAULT_TRAINING_DATASET
 from training.trainer import load_training_dataset, load_tokenizer
 
 dbutils.widgets.combobox("input_model", DEFAULT_INPUT_MODEL, SUGGESTED_INPUT_MODELS, "input_model")
-dbutils.widgets.text("num_gpus", "", "num_gpus")
+dbutils.widgets.text("num_gpus", "1", "num_gpus")
 dbutils.widgets.text("local_training_root", "", "local_training_root")
 dbutils.widgets.text("dbfs_output_root", "", "dbfs_output_root")
 dbutils.widgets.text("experiment_id", "", "experiment_id")
-dbutils.widgets.combobox("gpu_family", "a100", ["v100", "a10", "a100"])
+dbutils.widgets.combobox("gpu_family", "a10", ["v100", "a10", "a100"])
 
 # COMMAND ----------
 
 timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-model_name = "dolly"
+model_name = "dolly_demo"
 
 experiment_id = dbutils.widgets.get("experiment_id")
 input_model = dbutils.widgets.get("input_model")
@@ -152,23 +152,49 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # COMMAND ----------
 
-!deepspeed {num_gpus_flag} \
-    --module training.trainer \
-    --input-model {input_model} \
-    --deepspeed {deepspeed_config} \
-    --epochs 2 \
-    --local-output-dir {local_output_dir} \
-    --dbfs-output-dir {dbfs_output_dir} \
-    --per-device-train-batch-size {batch_size} \
-    --per-device-eval-batch-size {batch_size} \
-    --logging-steps 10 \
-    --save-steps 200 \
-    --save-total-limit 20 \
-    --eval-steps 50 \
-    --warmup-steps 50 \
-    --test-size 200 \
-    --lr 5e-6 \
-    {bf16_flag}
+# !deepspeed {num_gpus_flag} \
+#     --module training.trainer \
+#     --input-model {input_model} \
+#     --deepspeed {deepspeed_config} \
+#     --epochs 2 \
+#     --local-output-dir {local_output_dir} \
+#     --dbfs-output-dir {dbfs_output_dir} \
+#     --per-device-train-batch-size {batch_size} \
+#     --per-device-eval-batch-size {batch_size} \
+#     --logging-steps 10 \
+#     --save-steps 200 \
+#     --save-total-limit 20 \
+#     --eval-steps 50 \
+#     --warmup-steps 50 \
+#     --test-size 200 \
+#     --lr 5e-6 \
+#     {bf16_flag}
+
+# COMMAND ----------
+
+from training.trainer import train
+
+train(
+  input_model=input_model,
+  local_output_dir=local_output_dir,
+  dbfs_output_dir=dbfs_output_dir,
+  epochs=2,
+  per_device_train_batch_size=batch_size,
+  per_device_eval_batch_size=batch_size,
+  test_size=1000,
+  warmup_steps=50,
+  logging_steps=10,
+  eval_steps=50,
+  save_steps=400,
+  save_total_limit=10,
+  lr=5e-6,
+  seed=DEFAULT_SEED,
+  deepspeed=deepspeed_config,
+  training_dataset=DEFAULT_TRAINING_DATASET,
+  gradient_checkpointing=True,
+  local_rank=True,
+  bf16=True,
+)
 
 # COMMAND ----------
 

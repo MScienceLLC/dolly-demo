@@ -17,17 +17,17 @@
 
 # MAGIC %load_ext autoreload
 # MAGIC %autoreload 2
-
-default_model = "databricks/dolly-v2-3b"
-
-suggested_models = [
-    "databricks/dolly-v1-6b",
-    "databricks/dolly-v2-3b",
-    "databricks/dolly-v2-7b",
-    "databricks/dolly-v2-12b",
-]
-
-dbutils.widgets.combobox("input_model", default_model, suggested_models, "input_model")
+# MAGIC
+# MAGIC default_model = "databricks/dolly-v2-3b"
+# MAGIC
+# MAGIC suggested_models = [
+# MAGIC     "databricks/dolly-v1-6b",
+# MAGIC     "databricks/dolly-v2-3b",
+# MAGIC     "databricks/dolly-v2-7b",
+# MAGIC     "databricks/dolly-v2-12b",
+# MAGIC ]
+# MAGIC
+# MAGIC dbutils.widgets.combobox("input_model", default_model, suggested_models, "input_model")
 
 # COMMAND ----------
 

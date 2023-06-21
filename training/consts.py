@@ -9,6 +9,7 @@ SUGGESTED_INPUT_MODELS = [
     "databricks/dolly-v2-12b"
 ]
 DEFAULT_TRAINING_DATASET = "databricks/databricks-dolly-15k"
+DEFAULT_MSCIENCE_DATASET = "/dbfs/FileStore/data_for_test/train.json"
 INTRO_BLURB = (
     "Below is an instruction that describes a task. Write a response that appropriately completes the request."
 )
